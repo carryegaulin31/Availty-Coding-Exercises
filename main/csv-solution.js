@@ -1,47 +1,38 @@
 const csv = require('csv-parser')
+const { listenerCount } = require('events')
 const fs = require('fs')
-const results = [];
-const Cigna = []
-const Anthem = []
+
+let results = []
+
 fs.createReadStream('mock.csv')
 .pipe(csv({}))
 .on('data', (data) => results.push(data))
 .on('end', ()=> {
 
-const filterResults = (results, obj) => results.filter( Insurance_Provider => Object.keys(Insurance_Provider).some( key => obj[key] ==Insurance_Provider[key]));
+let filteredResults = (results, obj) => results.filter( Insurance_Provider => Object.keys(Insurance_Provider).some( key => obj[key] == Insurance_Provider[key]))
+results.sort((a, b) => {
+    return(a.last_name > b.last_name) ? 1 : -1
+})
 
-Cigna.push(filterResults(results,{Insurance_Provider:"Cigna"}));
-Anthem.push(filterResults(results,{Insurance_Provider:"Anthem"}));
 
-// const sortOn = (obj, prop) => {
-//     obj.sort (
-//         (a, b) => {
-//             if (a[prop] < b[prop]){
-//                 return -1;
-//             } else if (a[prop] > b[prop]){
-//                 return 1;
-//             } else {
-//                 return 0;   
-//             }
-//         }
-//         );
-//     }
-// console.log(sortOn(Cigna, last_name))
+let group = results.reduce((r, a) => {
+    
+    r[a.Insurance_Provider] = [...r[a.Insurance_Provider] || [], a]
+    return r
+   })
 
-    fs.writeFile("CignaFile.js", "const Cigna = require('./csv-solution')/n console.log(Cigna)", (error, data) => {
-            console.log("Write complete")
-            console.log(error)
-            console.log(data)
-        })
-        
-        fs.writeFile("AnthemFile.js", "const Anthem = require('./csv-solution')/n console.log(Anthem)", (error, data) => {
-                console.log("Write complete")
-                console.log(error)
-                console.log(data)
-            })
-            
-            
-            
-            // exports.array = Cigna
-            // exports.array = Anthem
-  });
+let jsonObj = {group}
+
+let jsonContent = JSON.stringify(jsonObj)
+
+
+fs.writeFile("output.json", jsonContent, 'utf8', function (err) {
+    if (err) {
+        console.log("An error occured while writing JSON Object to File.")
+        return console.log(err)
+    }
+ 
+    console.log("JSON file has been saved.")
+})
+
+})
